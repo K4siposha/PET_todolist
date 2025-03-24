@@ -1,6 +1,7 @@
 "use strict";
 // обязательно использовать localstorage
 // из функционала добавление, удаление, редактирование задач, возможность помечать выполненные, фильтрация
+// пометка выполненной задачи через checkbox - сделать текст зачеркнутым и поменять цвет на зелёный
 
 function add() {
     const taskText = document.getElementById('taskInput').value;
@@ -23,6 +24,12 @@ function add() {
     editButton.textContent = 'Edit';
     editButton.dataset.taskId = taskId;
 
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.textContent = 'Check';
+    checkbox.dataset.taskId = taskId;
+
+    taskElement.appendChild(checkbox);
     taskElement.appendChild(text);
     taskElement.appendChild(editButton);
     taskElement.appendChild(deleteButton);
@@ -30,10 +37,10 @@ function add() {
     document.getElementById('taskList').appendChild(taskElement);
     document.getElementById('taskInput').value = '';
 
-    setupEventListeners(deleteButton, text, taskElement, editButton);
+    setupEventListeners(deleteButton, text, taskElement, editButton, checkbox);
 }
 
-function setupEventListeners(deleteButton, text, taskElement, editButton) {
+function setupEventListeners(deleteButton, text, taskElement, editButton, checkbox) {
     deleteButton.addEventListener('click', function() {
         const taskIdToDelete = this.dataset.taskId;
         const taskToDelete = document.getElementById(taskIdToDelete);
@@ -48,6 +55,17 @@ function setupEventListeners(deleteButton, text, taskElement, editButton) {
 
         if (newText !== null) {
             text.textContent = newText;
+        }
+    });
+    checkbox.addEventListener('change', function () {
+        const taskElement = this.parentNode;
+        let text = taskElement.querySelector('span');
+        if (checkbox.checked) {
+            text.style.textDecoration = 'line-through';
+            text.style.color = 'green';
+        } else {
+            text.style.textDecoration = 'none';
+            text.style.color = 'black';
         }
     });
 }
