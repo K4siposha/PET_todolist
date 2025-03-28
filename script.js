@@ -1,18 +1,24 @@
 "use strict";
-// обязательно использовать localstorage
-// из функционала добавление, удаление, редактирование задач, возможность помечать выполненные, фильтрация
-// пометка выполненной задачи через checkbox - сделать текст зачеркнутым и поменять цвет на зелёный
+
+const tasks = [];
 
 function add() {
     const taskText = document.getElementById('taskInput').value;
     if (taskText.trim() === '') return;
 
-    let taskId = Date.now().toString();
+    let taskId;
+    if (crypto.randomUUID) {
+        taskId = crypto.randomUUID();
+    } else {
+        taskId = Date.now().toString();
+    }
+
+    localStorage.setItem('tasks', JSON.stringify(tasks));
 
     const taskElement = document.createElement('li');
     taskElement.id = taskId;
 
-    let text = document.createElement('span');
+    const text = document.createElement('span');
     text.dataset.taskId = taskId;
     text.textContent = taskText;
 
@@ -29,6 +35,10 @@ function add() {
     checkbox.textContent = 'Check';
     checkbox.dataset.taskId = taskId;
 
+    const filterButton = document.createElement("button");
+    filterButton.textContent = 'Filter';
+    filterButton.dataset.taskId = taskId;
+
     taskElement.appendChild(checkbox);
     taskElement.appendChild(text);
     taskElement.appendChild(editButton);
@@ -36,6 +46,12 @@ function add() {
 
     document.getElementById('taskList').appendChild(taskElement);
     document.getElementById('taskInput').value = '';
+
+    tasks.push({
+        id: taskId,
+        text: taskText,
+        completed: checkbox.checked
+    });
 
     setupEventListeners(deleteButton, text, taskElement, editButton, checkbox);
 }
