@@ -1,6 +1,6 @@
 "use strict";
 
-const tasks = [];
+let tasks = [];
 
 function add() {
     const taskText = document.getElementById('taskInput').value;
@@ -12,8 +12,6 @@ function add() {
     } else {
         taskId = Date.now().toString();
     }
-
-    localStorage.setItem('tasks', JSON.stringify(tasks));
 
     const taskElement = document.createElement('li');
     taskElement.id = taskId;
@@ -49,19 +47,29 @@ function add() {
 
     tasks.push({
         id: taskId,
-        text: taskText,
+        name: taskText,
         completed: checkbox.checked
     });
 
-    setupEventListeners(deleteButton, text, taskElement, editButton, checkbox);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+
+    setupEventListeners(deleteButton, text, taskElement, editButton, checkbox, tasks);
 }
 
-function setupEventListeners(deleteButton, text, taskElement, editButton, checkbox) {
+function setupEventListeners(deleteButton, text, taskElement, editButton, checkbox, tasks) {
     deleteButton.addEventListener('click', function() {
         const taskIdToDelete = this.dataset.taskId;
         const taskToDelete = document.getElementById(taskIdToDelete);
         if (taskToDelete) {
             taskToDelete.remove();
+
+            if (Array.isArray(tasks)) {
+                const index = tasks.findIndex(task => task.id === taskIdToDelete);
+                if (index !== -1) {
+                    tasks.splice(index, 1);
+                    localStorage.setItem('tasks', JSON.stringify(tasks));
+                }
+            }
         }
     });
     editButton.addEventListener('click', function() {
@@ -69,9 +77,11 @@ function setupEventListeners(deleteButton, text, taskElement, editButton, checkb
         let text = taskElement.querySelector('span');
         let newText = prompt('Название', text.textContent);
 
-        if (newText !== null) {
-            text.textContent = newText;
-        }
+        text.textContent = newText;
+
+        const index = tasks.findIndex(task => task.id === taskElement.id);
+        tasks[index].name = newText;
+        localStorage.setItem('tasks', JSON.stringify(tasks));
     });
     checkbox.addEventListener('change', function () {
         const taskElement = this.parentNode;
@@ -84,6 +94,51 @@ function setupEventListeners(deleteButton, text, taskElement, editButton, checkb
             text.style.color = 'black';
         }
     });
+}
+
+document.addEventListener('DOMContentLoaded', function (){
+    const savedTasks = localStorage.getItem('tasks');
+    if (savedTasks) {
+        tasks = JSON.parse(savedTasks);
+        tasks.forEach(function (task) {
+            createTaskElement (task);
+        });
+    }
+});
+
+function createTaskElement (task) {
+    const taskElement = document.createElement('li');
+    taskElement.id = task.id;
+
+    const text = document.createElement('span');
+    text.dataset.id = task.id;
+    text.textContent = task.name;
+
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = 'Delete';
+    deleteButton.dataset.id = task.id;
+
+    const editButton = document.createElement("button");
+    editButton.textContent = 'Edit';
+    editButton.dataset.id = task.id;
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = task.completed;
+    checkbox.dataset.id = task.id;
+
+    const filterButton = document.createElement("button");
+    filterButton.textContent = 'Filter';
+    filterButton.dataset.id = task.id;
+
+    taskElement.appendChild(checkbox);
+    taskElement.appendChild(text);
+    taskElement.appendChild(editButton);
+    taskElement.appendChild(deleteButton);
+
+    document.getElementById('taskList').appendChild(taskElement);
+
+    setupEventListeners(deleteButton, text, taskElement, editButton, checkbox, tasks);
 }
 
 document.getElementById('addTaskBtn').addEventListener('click', add);
