@@ -1,6 +1,6 @@
 "use strict";
 
-let tasks = [];
+let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
 
 function add() {
     const taskText = document.getElementById('taskInput').value;
@@ -30,12 +30,7 @@ function add() {
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.textContent = 'Check';
     checkbox.dataset.taskId = taskId;
-
-    const filterButton = document.createElement("button");
-    filterButton.textContent = 'Filter';
-    filterButton.dataset.taskId = taskId;
 
     taskElement.appendChild(checkbox);
     taskElement.appendChild(text);
@@ -72,27 +67,39 @@ function setupEventListeners(deleteButton, text, taskElement, editButton, checkb
             }
         }
     });
+
     editButton.addEventListener('click', function() {
         const taskElement = this.parentNode;
         let text = taskElement.querySelector('span');
         let newText = prompt('Название', text.textContent);
 
-        text.textContent = newText;
-
-        const index = tasks.findIndex(task => task.id === taskElement.id);
-        tasks[index].name = newText;
-        localStorage.setItem('tasks', JSON.stringify(tasks));
+        if (newText !== null) {
+            text.textContent = newText;
+            const index = tasks.findIndex(task => task.id === taskElement.id);
+            if (index !== -1) {
+                tasks[index].name = newText;
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            }
+        }
     });
+
     checkbox.addEventListener('change', function () {
+        const isChecked = this.checked;
         const taskElement = this.parentNode;
         let text = taskElement.querySelector('span');
-        if (checkbox.checked) {
+        let index = tasks.findIndex(task => task.id === taskElement.id);
+        tasks[index].completed = isChecked;
+
+        if (isChecked) {
             text.style.textDecoration = 'line-through';
             text.style.color = 'green';
+            document.getElementById('completedTaskList').appendChild(taskElement);
         } else {
             text.style.textDecoration = 'none';
             text.style.color = 'black';
+            document.getElementById('taskList').appendChild(taskElement);
         }
+        localStorage.setItem('tasks', JSON.stringify(tasks));
     });
 }
 
@@ -111,32 +118,36 @@ function createTaskElement (task) {
     taskElement.id = task.id;
 
     const text = document.createElement('span');
-    text.dataset.id = task.id;
+    text.dataset.taskId = task.id;
     text.textContent = task.name;
 
     const deleteButton = document.createElement("button");
     deleteButton.textContent = 'Delete';
-    deleteButton.dataset.id = task.id;
+    deleteButton.dataset.taskId = task.id;
 
     const editButton = document.createElement("button");
     editButton.textContent = 'Edit';
-    editButton.dataset.id = task.id;
+    editButton.dataset.taskId = task.id;
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = task.completed;
-    checkbox.dataset.id = task.id;
+    checkbox.dataset.taskId = task.id;
 
-    const filterButton = document.createElement("button");
-    filterButton.textContent = 'Filter';
-    filterButton.dataset.id = task.id;
+    if (task.completed) {
+        text.style.textDecoration = 'line-through';
+        text.style.color = 'green';
+        document.getElementById('completedTaskList').appendChild(taskElement);
+    } else {
+        text.style.textDecoration = 'none';
+        text.style.color = 'black';
+        document.getElementById('taskList').appendChild(taskElement);
+    }
 
     taskElement.appendChild(checkbox);
     taskElement.appendChild(text);
     taskElement.appendChild(editButton);
     taskElement.appendChild(deleteButton);
-
-    document.getElementById('taskList').appendChild(taskElement);
 
     setupEventListeners(deleteButton, text, taskElement, editButton, checkbox, tasks);
 }
